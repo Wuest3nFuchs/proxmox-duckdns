@@ -343,10 +343,6 @@ ExecStart=
 ExecStart=-/sbin/agetty --autologin root --noclear %I 38400 linux
 EOF"
 
-# Habilitar el servicio de autologin
-run_in_container "systemctl daemon-reload"
-run_in_container "systemctl enable console-getty.service"
-
 # También configurar autologin para tty1 (consola principal)
 run_in_container "mkdir -p /etc/systemd/system/getty@tty1.service.d"
 run_in_container "cat > /etc/systemd/system/getty@tty1.service.d/override.conf << 'EOF'
@@ -355,7 +351,24 @@ ExecStart=
 ExecStart=-/sbin/agetty --autologin root --noclear %I 38400 linux
 EOF"
 
+# Configurar autologin para container-getty (específico para contenedores LXC)
+run_in_container "mkdir -p /etc/systemd/system/container-getty@1.service.d"
+run_in_container "cat > /etc/systemd/system/container-getty@1.service.d/override.conf << 'EOF'
+[Service]
+ExecStart=
+ExecStart=-/sbin/agetty --autologin root --noclear --keep-baud pts/%I 115200,38400,9600 vt220
+EOF"
+
+# Habilitar los servicios de autologin
 run_in_container "systemctl daemon-reload"
+run_in_container "systemctl enable console-getty.service"
+run_in_container "systemctl enable container-getty@1.service"
+
+show_info "Reiniciando contenedor para aplicar autologin..."
+# Reiniciar el contenedor para que el autologin surta efecto
+pct stop $CONTAINER_ID
+sleep 2
+pct start $CONTAINER_ID
 
 show_success "¡Instalación completada exitosamente!"
 echo ""
@@ -386,7 +399,9 @@ echo "• ✅ Autoboot al iniciar Proxmox"
 echo "• ✅ Autologin en consola (sin contraseña)"
 echo "• ✅ Pantalla de bienvenida con información en tiempo real"
 echo ""
-echo "💡 NOTA: Al entrar por consola (no SSH), no necesitas contraseña"
-echo "Para SSH usa: ssh root@IP_DEL_CONTENEDOR (contraseña: $CONTAINER_PASSWORD)"
+echo "💡 NOTA IMPORTANTE:"
+echo "• Consola Proxmox: pct enter $CONTAINER_ID (SIN CONTRASEÑA - autologin)"
+echo "• SSH: ssh root@IP_DEL_CONTENEDOR (contraseña: $CONTAINER_PASSWORD)"
+echo "• Si el autologin no funciona inmediatamente, usa: pct reboot $CONTAINER_ID"
 echo ""
 echo "🚀 ¡Desarrollado con ❤️ para la comunidad de Proxmox!" 

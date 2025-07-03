@@ -200,6 +200,17 @@ chmod +x proxmox-auto-install.sh
 ./proxmox-auto-install.sh
 ```
 
+#### El autologin no funciona
+```bash
+# Arreglar autologin en contenedor existente
+wget https://raw.githubusercontent.com/MondoBoricua/proxmox-duckdns/main/fix-autologin.sh
+chmod +x fix-autologin.sh
+./fix-autologin.sh [ID_CONTENEDOR]
+
+# O manualmente:
+pct reboot [ID_CONTENEDOR]
+```
+
 #### El contenedor no se crea
 ```bash
 # Verifica que el ID no esté en uso
