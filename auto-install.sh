@@ -44,8 +44,8 @@ chmod +x /tmp/proxmox-auto-install.sh
 echo "🚀 Ejecutando instalador automático..."
 echo ""
 
-# Ejecutar el script con bash explícitamente
-if bash /tmp/proxmox-auto-install.sh; then
+# Ejecutar el script con bash y redirigir entrada desde /dev/tty
+if bash /tmp/proxmox-auto-install.sh < /dev/tty; then
     echo ""
     echo "✅ ¡Proceso completado exitosamente!"
 else
@@ -56,8 +56,8 @@ else
     echo "   bash /tmp/proxmox-auto-install.sh"
     echo ""
     
-    # Intentar ejecutar manualmente
-    bash /tmp/proxmox-auto-install.sh
+    # Intentar ejecutar manualmente con entrada desde terminal
+    bash /tmp/proxmox-auto-install.sh < /dev/tty
     
     if [ $? -eq 0 ]; then
         echo ""
