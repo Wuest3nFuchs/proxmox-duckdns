@@ -30,14 +30,14 @@ pct enter [ID_DEL_CONTENEDOR]
 
 ```bash
 # Instalación en una sola línea
-curl -sSL https://raw.githubusercontent.com/[TU_USUARIO]/[TU_REPO]/main/install.sh | sudo bash
+curl -sSL https://raw.githubusercontent.com/MondoBoricua/proxmox-duckdns/main/install.sh | sudo bash
 ```
 
 ### 3. Instalación (Método Manual)
 
 ```bash
 # Descargar el script
-wget https://raw.githubusercontent.com/[TU_USUARIO]/[TU_REPO]/main/duckdns.sh
+wget https://raw.githubusercontent.com/MondoBoricua/proxmox-duckdns/main/duckdns.sh
 
 # Darle permisos de ejecución
 chmod +x duckdns.sh
@@ -170,4 +170,4 @@ Si este script te ayudó, ¡dale una estrella al repo! ⭐
 
 ---
 
-**Desarrollado con ❤️ para la comunidad de Proxmox** 
+**Desarrollado con ❤️ para la comunidad de Proxmox**

@@ -18,8 +18,8 @@ if ! command -v wget &> /dev/null && ! command -v curl &> /dev/null; then
     apt update && apt install -y wget
 fi
 
-# URL del script principal (actualiza con tu repo)
-SCRIPT_URL="https://raw.githubusercontent.com/TU_USUARIO/proxmox-duckdns/main/duckdns.sh"
+# URL del script principal
+SCRIPT_URL="https://raw.githubusercontent.com/MondoBoricua/proxmox-duckdns/main/duckdns.sh"
 
 echo "⬇️  Descargando instalador..."
 
