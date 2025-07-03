@@ -4,7 +4,7 @@
 # Se ejecuta desde el host Proxmox y crea todo automáticamente
 # ¡Brutal! - Todo automatizado para la comunidad boricua
 
-set -e  # Salir si hay algún error
+# Configuración básica sin manejo estricto de errores
 
 echo "🦆 ===== INSTALADOR AUTOMÁTICO DUCKDNS PARA PROXMOX ====="
 echo "Este script va a crear un contenedor LXC y configurar DuckDNS automáticamente"
@@ -23,21 +23,7 @@ show_error() {
     echo -e "\e[31m[ERROR]\e[0m $1"
 }
 
-# Función para manejar errores (solo para errores críticos)
-handle_error() {
-    local exit_code=$?
-    local line_number=$1
-    echo ""
-    show_error "Error crítico en línea $line_number (código: $exit_code)"
-    echo ""
-    echo "🛠️  SOLUCIÓN MANUAL:"
-    echo "   1. Ejecuta: bash /tmp/proxmox-auto-install.sh"
-    echo "   2. O descarga de nuevo y ejecuta paso a paso"
-    echo ""
-    echo "📞 Si el problema persiste, reporta el error en:"
-    echo "   https://github.com/MondoBoricua/proxmox-duckdns/issues"
-    exit $exit_code
-}
+
 
 # Verificar que estamos en Proxmox
 if ! command -v pct &> /dev/null; then
@@ -45,35 +31,35 @@ if ! command -v pct &> /dev/null; then
     exit 1
 fi
 
-# Habilitar trap para errores solo después de la validación inicial
-set +e  # Deshabilitar salida automática en errores
+
 
 # Pedir información al usuario
 echo "📝 Configuración inicial:"
 
-# Función para leer input de manera segura
-safe_read() {
-    local prompt="$1"
-    local default="$2"
-    local var_name="$3"
-    
-    if [ -n "$default" ]; then
-        read -r -p "$prompt [$default]: " input
-        input=${input:-$default}
-    else
-        read -r -p "$prompt: " input
-    fi
-    
-    eval "$var_name='$input'"
-}
+echo -n "Token de DuckDNS: "
+read DUCKDNS_TOKEN
 
-safe_read "Token de DuckDNS" "" "DUCKDNS_TOKEN"
-safe_read "Subdominio (ej. midominio)" "" "DUCKDNS_DOMAIN"
-safe_read "ID del contenedor (ej. 100)" "" "CONTAINER_ID"
-safe_read "Hostname del contenedor" "duckdns" "CONTAINER_HOSTNAME"
-safe_read "Contraseña root del contenedor" "duckdns" "CONTAINER_PASSWORD"
-safe_read "Almacenamiento" "local-lvm" "STORAGE"
-safe_read "Bridge de red" "vmbr0" "NETWORK_BRIDGE"
+echo -n "Subdominio (ej. midominio): "
+read DUCKDNS_DOMAIN
+
+echo -n "ID del contenedor (ej. 100): "
+read CONTAINER_ID
+
+echo -n "Hostname del contenedor [duckdns]: "
+read CONTAINER_HOSTNAME
+CONTAINER_HOSTNAME=${CONTAINER_HOSTNAME:-duckdns}
+
+echo -n "Contraseña root del contenedor [duckdns]: "
+read CONTAINER_PASSWORD
+CONTAINER_PASSWORD=${CONTAINER_PASSWORD:-duckdns}
+
+echo -n "Almacenamiento [local-lvm]: "
+read STORAGE
+STORAGE=${STORAGE:-local-lvm}
+
+echo -n "Bridge de red [vmbr0]: "
+read NETWORK_BRIDGE
+NETWORK_BRIDGE=${NETWORK_BRIDGE:-vmbr0}
 
 # Validar entradas críticas
 if [ -z "$DUCKDNS_TOKEN" ]; then
