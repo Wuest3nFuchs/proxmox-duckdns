@@ -56,7 +56,11 @@ read -r -p "Token de DuckDNS: " DUCKDNS_TOKEN
 read -r -p "Subdominio (ej. midominio): " DUCKDNS_DOMAIN
 read -r -p "ID del contenedor (ej. 100): " CONTAINER_ID
 read -r -p "Hostname del contenedor (ej. duckdns): " CONTAINER_HOSTNAME
-read -r -p "Contraseña root del contenedor: " CONTAINER_PASSWORD
+
+# Usar contraseña por defecto si no se especifica
+read -r -p "Contraseña root del contenedor [duckdns]: " CONTAINER_PASSWORD
+CONTAINER_PASSWORD=${CONTAINER_PASSWORD:-duckdns}
+
 read -r -p "Almacenamiento (ej. local-lvm): " STORAGE
 read -r -p "Bridge de red (ej. vmbr0): " NETWORK_BRIDGE
 
@@ -109,7 +113,7 @@ if pct status $CONTAINER_ID &> /dev/null; then
 fi
 
 show_info "Creando contenedor LXC..."
-# Crear el contenedor LXC
+# Crear el contenedor LXC con autoboot habilitado
 pct create $CONTAINER_ID local:vztmpl/$TEMPLATE \
     --hostname $CONTAINER_HOSTNAME \
     --memory $CONTAINER_MEMORY \
@@ -118,6 +122,7 @@ pct create $CONTAINER_ID local:vztmpl/$TEMPLATE \
     --net0 name=eth0,bridge=$NETWORK_BRIDGE,ip=dhcp \
     --password $CONTAINER_PASSWORD \
     --start 1 \
+    --onboot 1 \
     --unprivileged 1 \
     --features nesting=1
 
@@ -316,14 +321,40 @@ run_in_container "echo '/opt/duckdns/welcome.sh' >> /root/.bashrc"
 # También crear un alias para mostrar la info rápidamente
 run_in_container "echo 'alias duckdns=\"/opt/duckdns/welcome.sh\"' >> /root/.bashrc"
 
+show_info "Configurando autologin para la consola..."
+# Configurar autologin en la consola del contenedor
+run_in_container "mkdir -p /etc/systemd/system/console-getty.service.d"
+run_in_container "cat > /etc/systemd/system/console-getty.service.d/override.conf << 'EOF'
+[Service]
+ExecStart=
+ExecStart=-/sbin/agetty --autologin root --noclear %I 38400 linux
+EOF"
+
+# Habilitar el servicio de autologin
+run_in_container "systemctl daemon-reload"
+run_in_container "systemctl enable console-getty.service"
+
+# También configurar autologin para tty1 (consola principal)
+run_in_container "mkdir -p /etc/systemd/system/getty@tty1.service.d"
+run_in_container "cat > /etc/systemd/system/getty@tty1.service.d/override.conf << 'EOF'
+[Service]
+ExecStart=
+ExecStart=-/sbin/agetty --autologin root --noclear %I 38400 linux
+EOF"
+
+run_in_container "systemctl daemon-reload"
+
 show_success "¡Instalación completada exitosamente!"
 echo ""
 echo "🎉 ===== RESUMEN DE LA INSTALACIÓN ====="
 echo "📦 Contenedor ID: $CONTAINER_ID"
 echo "🏷️  Hostname: $CONTAINER_HOSTNAME"
 echo "🌐 Dominio: $DUCKDNS_DOMAIN.duckdns.org"
+echo "🔑 Contraseña root: $CONTAINER_PASSWORD"
 echo "💾 Almacenamiento: $STORAGE"
 echo "🔧 Red: $NETWORK_BRIDGE"
+echo "🚀 Autoboot: Habilitado"
+echo "🔓 Autologin: Habilitado (consola automática)"
 echo ""
 echo "📋 COMANDOS ÚTILES:"
 echo "• Acceder al contenedor: pct enter $CONTAINER_ID"
@@ -335,7 +366,14 @@ echo "🔍 VERIFICACIÓN:"
 echo "• Verifica tu dominio: nslookup $DUCKDNS_DOMAIN.duckdns.org"
 echo "• IP actual: curl -s ifconfig.me"
 echo ""
-echo "✅ DuckDNS está configurado y funcionando automáticamente"
-echo "El contenedor actualizará tu IP cada 5 minutos"
+echo "✅ CARACTERÍSTICAS HABILITADAS:"
+echo "• ✅ DuckDNS configurado y funcionando automáticamente"
+echo "• ✅ Actualización de IP cada 5 minutos"
+echo "• ✅ Autoboot al iniciar Proxmox"
+echo "• ✅ Autologin en consola (sin contraseña)"
+echo "• ✅ Pantalla de bienvenida con información en tiempo real"
+echo ""
+echo "💡 NOTA: Al entrar por consola (no SSH), no necesitas contraseña"
+echo "Para SSH usa: ssh root@IP_DEL_CONTENEDOR (contraseña: $CONTAINER_PASSWORD)"
 echo ""
 echo "🚀 ¡Desarrollado con ❤️ para la comunidad de Proxmox!" 

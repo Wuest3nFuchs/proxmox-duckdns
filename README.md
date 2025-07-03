@@ -37,6 +37,9 @@ chmod +x proxmox-auto-install.sh
 - ✅ Configura la red y almacenamiento
 - ✅ Instala y configura DuckDNS
 - ✅ Configura cron para actualización automática
+- ✅ Habilita autoboot (se inicia automáticamente con Proxmox)
+- ✅ Configura autologin en consola (sin contraseña)
+- ✅ Contraseña por defecto: `duckdns` (personalizable)
 - ✅ Crea pantalla de bienvenida con información en tiempo real
 - ✅ Prueba la primera actualización
 - ✅ ¡Todo listo en 5 minutos!
@@ -106,6 +109,24 @@ Después de la instalación encontrarás:
 ~/duckdns.log                 # Log de actualizaciones
 /var/log/duckdns/detailed.log # Historial detallado
 ```
+
+## 🔓 Acceso al Contenedor
+
+### **Consola Proxmox (Recomendado)**
+```bash
+# Acceso directo sin contraseña (autologin habilitado)
+pct enter [ID_CONTENEDOR]
+```
+
+### **SSH (Opcional)**
+```bash
+# Acceso por SSH (requiere contraseña)
+ssh root@IP_DEL_CONTENEDOR
+# Contraseña por defecto: duckdns
+```
+
+### **Autoboot**
+El contenedor se inicia automáticamente cuando Proxmox arranca.
 
 ## 🖥️ Pantalla de Bienvenida
 
@@ -245,6 +266,9 @@ rm ~/duckdns.log
 
 - **Compatibilidad**: Funciona con Ubuntu 22.04 y Debian 12 (detección automática)
 - **Templates**: El script busca automáticamente el mejor template disponible
+- **Autologin**: La consola de Proxmox no requiere contraseña (configurado automáticamente)
+- **Contraseña SSH**: Por defecto es `duckdns` (puedes cambiarla durante la instalación)
+- **Autoboot**: El contenedor se inicia automáticamente con Proxmox
 - **Seguridad**: El script se ejecuta como root, asegúrate de confiar en el código
 - **Logs**: Los logs se guardan en `~/duckdns.log` para debugging
 - **Firewall**: No necesitas abrir puertos adicionales
