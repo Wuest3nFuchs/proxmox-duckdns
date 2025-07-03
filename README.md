@@ -5,7 +5,7 @@ Un script automatizado para configurar DuckDNS en contenedores LXC de Proxmox, p
 ## 📋 Requisitos
 
 - **Proxmox VE** (cualquier versión reciente)
-- **Contenedor LXC** con Ubuntu/Debian
+- **Template LXC** (Ubuntu 22.04 o Debian 12 - se detecta automáticamente)
 - **Token de DuckDNS** (obtenido desde [duckdns.org](https://www.duckdns.org))
 - **Subdominio registrado** en DuckDNS
 
@@ -31,6 +31,7 @@ chmod +x proxmox-auto-install.sh
 
 **¿Qué hace este script?**
 - ✅ Crea el contenedor LXC automáticamente
+- ✅ Detecta y usa el mejor template disponible (Ubuntu 22.04 o Debian 12)
 - ✅ Configura la red y almacenamiento
 - ✅ Instala y configura DuckDNS
 - ✅ Configura cron para actualización automática
@@ -206,6 +207,8 @@ rm ~/duckdns.log
 
 ## 📝 Notas Importantes
 
+- **Compatibilidad**: Funciona con Ubuntu 22.04 y Debian 12 (detección automática)
+- **Templates**: El script busca automáticamente el mejor template disponible
 - **Seguridad**: El script se ejecuta como root, asegúrate de confiar en el código
 - **Logs**: Los logs se guardan en `~/duckdns.log` para debugging
 - **Firewall**: No necesitas abrir puertos adicionales

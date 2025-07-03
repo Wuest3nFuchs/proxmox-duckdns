@@ -45,14 +45,38 @@ CONTAINER_DISK=${CONTAINER_DISK:-2}
 CONTAINER_CORES=${CONTAINER_CORES:-1}
 TEMPLATE_NAME="ubuntu-22.04-standard"
 
-show_info "Buscando template de Ubuntu..."
-# Buscar el template disponible
-TEMPLATE=$(pct template list | grep -i ubuntu | grep -i 22.04 | head -1 | awk '{print $2}')
-if [ -z "$TEMPLATE" ]; then
-    show_error "No se encontró template de Ubuntu 22.04"
-    show_info "Descargando template de Ubuntu 22.04..."
-    pveam download local ubuntu-22.04-standard_22.04-1_amd64.tar.zst
-    TEMPLATE="ubuntu-22.04-standard_22.04-1_amd64.tar.zst"
+show_info "Buscando templates disponibles..."
+# Mostrar templates disponibles para referencia
+echo "📋 Templates disponibles en el sistema:"
+pct template list | head -10
+
+# Buscar templates disponibles en orden de preferencia
+TEMPLATE=""
+
+# Primero intentar Ubuntu 22.04
+TEMPLATE=$(pct template list | grep -i ubuntu | grep -E "(22\.04|22-04)" | head -1 | awk '{print $2}')
+if [ -n "$TEMPLATE" ]; then
+    show_success "✅ Usando template de Ubuntu 22.04: $TEMPLATE"
+else
+    # Si no hay Ubuntu, buscar Debian 12
+    TEMPLATE=$(pct template list | grep -i debian | grep -E "(12|12\.)" | head -1 | awk '{print $2}')
+    if [ -n "$TEMPLATE" ]; then
+        show_success "✅ Usando template de Debian 12: $TEMPLATE"
+        show_info "💡 Nota: Se está usando Debian 12 porque Ubuntu 22.04 no está disponible"
+    else
+        # Buscar cualquier template de Ubuntu o Debian reciente
+        TEMPLATE=$(pct template list | grep -iE "(ubuntu|debian)" | head -1 | awk '{print $2}')
+        if [ -n "$TEMPLATE" ]; then
+            show_success "✅ Usando template disponible: $TEMPLATE"
+            show_info "💡 Nota: Se está usando el template más reciente disponible"
+        else
+            # Si no hay ninguno, descargar Ubuntu 22.04
+            show_info "⬇️ No se encontraron templates. Descargando Ubuntu 22.04..."
+            pveam download local ubuntu-22.04-standard_22.04-1_amd64.tar.zst
+            TEMPLATE="ubuntu-22.04-standard_22.04-1_amd64.tar.zst"
+            show_success "✅ Template descargado: $TEMPLATE"
+        fi
+    fi
 fi
 
 show_success "Template encontrado: $TEMPLATE"
