@@ -5,6 +5,8 @@
 # ¡Brutal! - Todo automatizado para la comunidad boricua
 
 set -e  # Salir si hay algún error
+set -u  # Salir si hay variables no definidas
+set -o pipefail  # Salir si hay errores en pipes
 
 echo "🦆 ===== INSTALADOR AUTOMÁTICO DUCKDNS PARA PROXMOX ====="
 echo "Este script va a crear un contenedor LXC y configurar DuckDNS automáticamente"
@@ -22,6 +24,25 @@ show_success() {
 show_error() {
     echo -e "\e[31m[ERROR]\e[0m $1"
 }
+
+# Función para manejar errores
+handle_error() {
+    local exit_code=$?
+    local line_number=$1
+    echo ""
+    show_error "Error en línea $line_number (código: $exit_code)"
+    echo ""
+    echo "🛠️  SOLUCIÓN MANUAL:"
+    echo "   1. Ejecuta: bash /tmp/proxmox-auto-install.sh"
+    echo "   2. O descarga de nuevo y ejecuta paso a paso"
+    echo ""
+    echo "📞 Si el problema persiste, reporta el error en:"
+    echo "   https://github.com/MondoBoricua/proxmox-duckdns/issues"
+    exit $exit_code
+}
+
+# Configurar trap para capturar errores
+trap 'handle_error $LINENO' ERR
 
 # Verificar que estamos en Proxmox
 if ! command -v pct &> /dev/null; then

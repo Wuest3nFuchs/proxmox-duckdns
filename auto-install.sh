@@ -44,11 +44,38 @@ chmod +x /tmp/proxmox-auto-install.sh
 echo "🚀 Ejecutando instalador automático..."
 echo ""
 
-# Ejecutar el script
-/tmp/proxmox-auto-install.sh
+# Ejecutar el script con bash explícitamente
+if bash /tmp/proxmox-auto-install.sh; then
+    echo ""
+    echo "✅ ¡Proceso completado exitosamente!"
+else
+    echo ""
+    echo "⚠️  El script automático falló. Ejecutando manualmente..."
+    echo ""
+    echo "🔧 Ejecutando comando de respaldo:"
+    echo "   bash /tmp/proxmox-auto-install.sh"
+    echo ""
+    
+    # Intentar ejecutar manualmente
+    bash /tmp/proxmox-auto-install.sh
+    
+    if [ $? -eq 0 ]; then
+        echo ""
+        echo "✅ ¡Proceso completado exitosamente con comando manual!"
+    else
+        echo ""
+        echo "❌ Error: El script no pudo ejecutarse correctamente"
+        echo ""
+        echo "🛠️  SOLUCIÓN MANUAL:"
+        echo "   1. Ejecuta: bash /tmp/proxmox-auto-install.sh"
+        echo "   2. O descarga de nuevo: wget https://raw.githubusercontent.com/MondoBoricua/proxmox-duckdns/main/proxmox-auto-install.sh"
+        echo "   3. Y ejecuta: bash proxmox-auto-install.sh"
+        echo ""
+        echo "📞 Si el problema persiste, reporta el error en:"
+        echo "   https://github.com/MondoBoricua/proxmox-duckdns/issues"
+        exit 1
+    fi
+fi
 
 # Limpiar
-rm -f /tmp/proxmox-auto-install.sh
-
-echo ""
-echo "✅ ¡Proceso completado!" 
+rm -f /tmp/proxmox-auto-install.sh 
