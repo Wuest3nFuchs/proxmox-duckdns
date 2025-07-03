@@ -11,7 +11,35 @@ Un script automatizado para configurar DuckDNS en contenedores LXC de Proxmox, p
 
 ## 🚀 Instalación Rápida
 
-### 1. Crear el Contenedor LXC
+### Método 1: Instalación Automática Completa (¡RECOMENDADO!) 🎯
+
+**Opción A: Súper Rápida (Una sola línea)** ⚡
+
+```bash
+# Desde el host Proxmox (SSH o consola) - TODO EN UNA LÍNEA
+curl -sSL https://raw.githubusercontent.com/MondoBoricua/proxmox-duckdns/main/auto-install.sh | bash
+```
+
+**Opción B: Descarga y Ejecuta** 📥
+
+```bash
+# Desde el host Proxmox (SSH o consola)
+wget https://raw.githubusercontent.com/MondoBoricua/proxmox-duckdns/main/proxmox-auto-install.sh
+chmod +x proxmox-auto-install.sh
+./proxmox-auto-install.sh
+```
+
+**¿Qué hace este script?**
+- ✅ Crea el contenedor LXC automáticamente
+- ✅ Configura la red y almacenamiento
+- ✅ Instala y configura DuckDNS
+- ✅ Configura cron para actualización automática
+- ✅ Prueba la primera actualización
+- ✅ ¡Todo listo en 5 minutos!
+
+### Método 2: Instalación Manual en Contenedor Existente
+
+#### 1. Crear el Contenedor LXC
 
 En Proxmox, crea un nuevo contenedor LXC:
 - **Template**: Ubuntu 22.04 o Debian 11/12
@@ -19,21 +47,21 @@ En Proxmox, crea un nuevo contenedor LXC:
 - **Disco**: 2GB (mínimo)
 - **Red**: Configurada con acceso a internet
 
-### 2. Acceder al Contenedor
+#### 2. Acceder al Contenedor
 
 ```bash
 # Desde Proxmox, accede al contenedor
 pct enter [ID_DEL_CONTENEDOR]
 ```
 
-### 3. Instalación (Método Rápido) 🚀
+#### 3. Instalación (Método Rápido) 🚀
 
 ```bash
 # Instalación en una sola línea
 curl -sSL https://raw.githubusercontent.com/MondoBoricua/proxmox-duckdns/main/install.sh | sudo bash
 ```
 
-### 3. Instalación (Método Manual)
+#### 3. Instalación (Método Manual)
 
 ```bash
 # Descargar el script
@@ -101,7 +129,39 @@ nslookup tudominio.duckdns.org
 
 ## 🛠️ Solución de Problemas
 
-### El cron no se ejecuta
+### Problemas con el Instalador Automático
+
+#### Error: "Este script debe ejecutarse en un servidor Proxmox VE"
+```bash
+# Asegúrate de estar en el HOST Proxmox, no en un contenedor
+# Usa SSH para conectarte al servidor Proxmox directamente
+ssh root@IP_DE_TU_PROXMOX
+```
+
+#### El contenedor no se crea
+```bash
+# Verifica que el ID no esté en uso
+pct list
+
+# Verifica que el storage existe
+pvesm status
+
+# Verifica templates disponibles
+pct template list
+```
+
+#### Error de permisos o red
+```bash
+# Verifica la configuración de red
+ip addr show
+
+# Verifica el bridge de red
+brctl show
+```
+
+### Problemas Generales
+
+#### El cron no se ejecuta
 ```bash
 # Reiniciar el servicio cron
 systemctl restart cron
@@ -110,7 +170,7 @@ systemctl restart cron
 journalctl -u cron
 ```
 
-### El script no actualiza la IP
+#### El script no actualiza la IP
 ```bash
 # Verificar conectividad
 curl -I https://www.duckdns.org
