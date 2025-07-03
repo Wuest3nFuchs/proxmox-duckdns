@@ -1,6 +1,7 @@
 # Logs
 *.log
 duckdns.log
+detailed.log
 
 # Archivos temporales
 *.tmp

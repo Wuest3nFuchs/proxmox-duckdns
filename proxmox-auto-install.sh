@@ -123,12 +123,31 @@ show_info "Configurando DuckDNS..."
 # Crear directorio para DuckDNS
 run_in_container "mkdir -p /opt/duckdns"
 
-# Crear el script de actualización de DuckDNS
+# Crear el script de actualización de DuckDNS mejorado
 run_in_container "cat > /opt/duckdns/duck.sh << 'EOF'
 #!/bin/bash
 # Script de actualización de DuckDNS - se ejecuta cada 5 minutos
 # Mantiene la IP actualizada automáticamente, ¡qué brutal!
-echo url=\"https://www.duckdns.org/update?domains=$DUCKDNS_DOMAIN&token=$DUCKDNS_TOKEN&ip=\" | curl -k -o ~/duckdns.log -K -
+
+# Obtener IP actual
+CURRENT_IP=\$(curl -s ifconfig.me 2>/dev/null)
+TIMESTAMP=\$(date '+%Y-%m-%d %H:%M:%S')
+
+# Crear directorio de logs si no existe
+mkdir -p /var/log/duckdns
+
+# Actualizar DuckDNS
+RESULT=\$(echo url=\"https://www.duckdns.org/update?domains=$DUCKDNS_DOMAIN&token=$DUCKDNS_TOKEN&ip=\" | curl -k -s -K -)
+
+# Guardar resultado en log principal
+echo \"\$RESULT\" > ~/duckdns.log
+
+# Guardar log detallado
+echo \"[\$TIMESTAMP] IP: \$CURRENT_IP - Resultado: \$RESULT\" >> /var/log/duckdns/detailed.log
+
+# Mantener solo las últimas 100 líneas del log detallado
+tail -n 100 /var/log/duckdns/detailed.log > /var/log/duckdns/detailed.log.tmp
+mv /var/log/duckdns/detailed.log.tmp /var/log/duckdns/detailed.log
 EOF"
 
 # Dar permisos al script
@@ -162,7 +181,7 @@ show_info "Limpiando sistema..."
 # Limpiar sistema
 run_in_container "apt autoremove -y && apt autoclean"
 
-# Crear script de información dentro del contenedor
+# Crear script de información avanzado dentro del contenedor
 run_in_container "cat > /root/duckdns-info.sh << 'EOF'
 #!/bin/bash
 echo \"🦆 ===== INFORMACIÓN DUCKDNS =====\"
@@ -178,6 +197,103 @@ echo \"Para actualizar manualmente: /opt/duckdns/duck.sh\"
 EOF"
 
 run_in_container "chmod +x /root/duckdns-info.sh"
+
+# Crear script de bienvenida que se ejecuta al hacer login
+run_in_container "cat > /opt/duckdns/welcome.sh << 'EOF'
+#!/bin/bash
+
+# Colores para la salida
+GREEN='\033[0;32m'
+BLUE='\033[0;34m'
+YELLOW='\033[1;33m'
+RED='\033[0;31m'
+NC='\033[0m' # No Color
+
+echo -e \"${BLUE}\"
+echo \"🦆 ===== DUCKDNS LXC CONTAINER =====\"
+echo -e \"${NC}\"
+
+# Información del dominio
+echo -e \"${GREEN}🌐 Dominio:${NC} $DUCKDNS_DOMAIN.duckdns.org\"
+
+# Obtener IP actual del servidor
+CURRENT_IP=\$(curl -s ifconfig.me 2>/dev/null || echo \"No disponible\")
+echo -e \"${GREEN}📡 IP Actual del Servidor:${NC} \$CURRENT_IP\"
+
+# Verificar última actualización
+if [ -f ~/duckdns.log ]; then
+    LAST_UPDATE=\$(stat -c %y ~/duckdns.log 2>/dev/null | cut -d. -f1)
+    LAST_RESULT=\$(cat ~/duckdns.log 2>/dev/null)
+    
+    echo -e \"${GREEN}🕐 Última Actualización:${NC} \$LAST_UPDATE\"
+    
+    if [[ \"\$LAST_RESULT\" == *\"OK\"* ]]; then
+        echo -e \"${GREEN}✅ Estado:${NC} Actualización exitosa\"
+    elif [[ \"\$LAST_RESULT\" == *\"KO\"* ]]; then
+        echo -e \"${RED}❌ Estado:${NC} Error en la actualización\"
+    else
+        echo -e \"${YELLOW}⚠️  Estado:${NC} Resultado desconocido: \$LAST_RESULT\"
+    fi
+    
+    # Mostrar historial de las últimas 3 actualizaciones
+    if [ -f /var/log/duckdns/detailed.log ]; then
+        echo -e \"${BLUE}📈 Últimas actualizaciones:${NC}\"
+        tail -n 3 /var/log/duckdns/detailed.log | while read line; do
+            if [[ \"\$line\" == *\"OK\"* ]]; then
+                echo -e \"  ${GREEN}✓${NC} \$line\"
+            elif [[ \"\$line\" == *\"KO\"* ]]; then
+                echo -e \"  ${RED}✗${NC} \$line\"
+            else
+                echo -e \"  ${YELLOW}?${NC} \$line\"
+            fi
+        done
+    fi
+else
+    echo -e \"${YELLOW}⚠️  Estado:${NC} No hay actualizaciones registradas\"
+fi
+
+# Verificar si cron está funcionando
+if systemctl is-active --quiet cron; then
+    echo -e \"${GREEN}🔄 Servicio Cron:${NC} Activo (actualiza cada 5 minutos)\"
+else
+    echo -e \"${RED}❌ Servicio Cron:${NC} Inactivo\"
+fi
+
+# Verificar resolución DNS
+DNS_IP=\$(nslookup $DUCKDNS_DOMAIN.duckdns.org 2>/dev/null | grep -A1 \"Name:\" | grep \"Address:\" | awk '{print \$2}' | head -1)
+if [ -n \"\$DNS_IP\" ]; then
+    echo -e \"${GREEN}🔍 DNS Resuelve a:${NC} \$DNS_IP\"
+    if [ \"\$DNS_IP\" = \"\$CURRENT_IP\" ]; then
+        echo -e \"${GREEN}✅ DNS Sincronizado:${NC} IP coincide\"
+    else
+        echo -e \"${YELLOW}⚠️  DNS Desactualizado:${NC} IP no coincide\"
+    fi
+else
+    echo -e \"${RED}❌ DNS:${NC} No se pudo resolver el dominio\"
+fi
+
+echo \"\"
+echo -e \"${BLUE}📋 Comandos útiles:${NC}\"
+echo \"  • Ver logs en tiempo real: tail -f ~/duckdns.log\"
+echo \"  • Ver historial completo: tail -f /var/log/duckdns/detailed.log\"
+echo \"  • Actualizar ahora: /opt/duckdns/duck.sh\"
+echo \"  • Ver info completa: /root/duckdns-info.sh\"
+echo \"  • Estado cron: systemctl status cron\"
+echo \"  • Mostrar esta info: duckdns\"
+echo \"\"
+echo -e \"${BLUE}🚀 Desarrollado con ❤️ para la comunidad de Proxmox${NC}\"
+echo \"\"
+EOF"
+
+run_in_container "chmod +x /opt/duckdns/welcome.sh"
+
+# Agregar el script de bienvenida al .bashrc para que se ejecute al hacer login
+run_in_container "echo '' >> /root/.bashrc"
+run_in_container "echo '# Mostrar información de DuckDNS al hacer login' >> /root/.bashrc"
+run_in_container "echo '/opt/duckdns/welcome.sh' >> /root/.bashrc"
+
+# También crear un alias para mostrar la info rápidamente
+run_in_container "echo 'alias duckdns=\"/opt/duckdns/welcome.sh\"' >> /root/.bashrc"
 
 show_success "¡Instalación completada exitosamente!"
 echo ""

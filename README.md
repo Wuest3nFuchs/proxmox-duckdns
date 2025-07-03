@@ -35,6 +35,7 @@ chmod +x proxmox-auto-install.sh
 - ✅ Configura la red y almacenamiento
 - ✅ Instala y configura DuckDNS
 - ✅ Configura cron para actualización automática
+- ✅ Crea pantalla de bienvenida con información en tiempo real
 - ✅ Prueba la primera actualización
 - ✅ ¡Todo listo en 5 minutos!
 
@@ -98,9 +99,25 @@ Después de la instalación encontrarás:
 
 ```
 /opt/duckdns/duck.sh          # Script de actualización
+/opt/duckdns/welcome.sh       # Pantalla de bienvenida
 /etc/cron.d/duckdns           # Configuración de cron
 ~/duckdns.log                 # Log de actualizaciones
+/var/log/duckdns/detailed.log # Historial detallado
 ```
+
+## 🖥️ Pantalla de Bienvenida
+
+Cuando entres al contenedor (`pct enter [ID]`), verás automáticamente:
+
+- 🌐 **Dominio configurado**
+- 📡 **IP actual del servidor**
+- 🕐 **Última actualización y resultado**
+- 📈 **Historial de las últimas 3 actualizaciones**
+- 🔄 **Estado del servicio cron**
+- 🔍 **Verificación de DNS en tiempo real**
+- 📋 **Comandos útiles disponibles**
+
+**Comando rápido**: Escribe `duckdns` en cualquier momento para ver la información.
 
 ## 🔍 Verificar que Funciona
 
@@ -120,6 +137,12 @@ cat /etc/cron.d/duckdns
 
 # Ver el resultado
 cat ~/duckdns.log
+
+# Ver historial completo
+tail -f /var/log/duckdns/detailed.log
+
+# Mostrar información completa
+duckdns
 ```
 
 ### Verificar DNS
