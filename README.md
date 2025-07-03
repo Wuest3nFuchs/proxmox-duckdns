@@ -13,14 +13,17 @@ Un script automatizado para configurar DuckDNS en contenedores LXC de Proxmox, p
 
 ### Método 1: Instalación Automática Completa (¡RECOMENDADO!) 🎯
 
-**Opción A: Súper Rápida (Una sola línea)** ⚡
+**Opción A: Súper Rápida (Dos pasos)** ⚡
 
 ```bash
-# Desde el host Proxmox (SSH o consola) - TODO EN UNA LÍNEA
+# Paso 1: Descargar el instalador
 curl -sSL https://raw.githubusercontent.com/MondoBoricua/proxmox-duckdns/main/auto-install.sh | bash
+
+# Paso 2: Ejecutar el instalador (copia y pega el comando que aparece)
+bash /tmp/proxmox-auto-install.sh
 ```
 
-> **💡 Nota**: Si el comando de una línea falla, el script automáticamente intentará ejecutar `bash /tmp/proxmox-auto-install.sh` como respaldo.
+> **💡 Nota**: El primer comando descarga el instalador, el segundo lo ejecuta. Así evitamos problemas con pipes.
 
 **Opción B: Descarga y Ejecuta** 📥
 
@@ -185,9 +188,10 @@ nslookup tudominio.duckdns.org
 ssh root@IP_DE_TU_PROXMOX
 ```
 
-#### El instalador automático se cuelga o falla
+#### El instalador automático no funciona
 ```bash
-# Solución 1: Ejecutar manualmente el script descargado
+# Solución 1: Usar el método de dos pasos
+curl -sSL https://raw.githubusercontent.com/MondoBoricua/proxmox-duckdns/main/auto-install.sh | bash
 bash /tmp/proxmox-auto-install.sh
 
 # Solución 2: Descargar y ejecutar paso a paso

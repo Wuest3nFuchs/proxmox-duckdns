@@ -36,66 +36,29 @@ fi
 # Pedir información al usuario
 echo "📝 Configuración inicial:"
 
-# Detectar si estamos en un pipe y usar /dev/tty si es necesario
-if [ -t 0 ]; then
-    # Entrada estándar es un terminal
-    INPUT_SOURCE=""
-else
-    # Estamos en un pipe, usar /dev/tty
-    INPUT_SOURCE="< /dev/tty"
-fi
-
 echo -n "Token de DuckDNS: "
-if [ -t 0 ]; then
-    read DUCKDNS_TOKEN
-else
-    read DUCKDNS_TOKEN < /dev/tty
-fi
+read DUCKDNS_TOKEN
 
 echo -n "Subdominio (ej. midominio): "
-if [ -t 0 ]; then
-    read DUCKDNS_DOMAIN
-else
-    read DUCKDNS_DOMAIN < /dev/tty
-fi
+read DUCKDNS_DOMAIN
 
 echo -n "ID del contenedor (ej. 100): "
-if [ -t 0 ]; then
-    read CONTAINER_ID
-else
-    read CONTAINER_ID < /dev/tty
-fi
+read CONTAINER_ID
 
 echo -n "Hostname del contenedor [duckdns]: "
-if [ -t 0 ]; then
-    read CONTAINER_HOSTNAME
-else
-    read CONTAINER_HOSTNAME < /dev/tty
-fi
+read CONTAINER_HOSTNAME
 CONTAINER_HOSTNAME=${CONTAINER_HOSTNAME:-duckdns}
 
 echo -n "Contraseña root del contenedor [duckdns]: "
-if [ -t 0 ]; then
-    read CONTAINER_PASSWORD
-else
-    read CONTAINER_PASSWORD < /dev/tty
-fi
+read CONTAINER_PASSWORD
 CONTAINER_PASSWORD=${CONTAINER_PASSWORD:-duckdns}
 
 echo -n "Almacenamiento [local-lvm]: "
-if [ -t 0 ]; then
-    read STORAGE
-else
-    read STORAGE < /dev/tty
-fi
+read STORAGE
 STORAGE=${STORAGE:-local-lvm}
 
 echo -n "Bridge de red [vmbr0]: "
-if [ -t 0 ]; then
-    read NETWORK_BRIDGE
-else
-    read NETWORK_BRIDGE < /dev/tty
-fi
+read NETWORK_BRIDGE
 NETWORK_BRIDGE=${NETWORK_BRIDGE:-vmbr0}
 
 # Validar entradas críticas
