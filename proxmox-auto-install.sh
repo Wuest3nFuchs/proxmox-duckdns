@@ -404,4 +404,4 @@ echo "• Consola Proxmox: pct enter $CONTAINER_ID (SIN CONTRASEÑA - autologin)
 echo "• SSH: ssh root@IP_DEL_CONTENEDOR (contraseña: $CONTAINER_PASSWORD)"
 echo "• Si el autologin no funciona inmediatamente, usa: pct reboot $CONTAINER_ID"
 echo ""
-echo "🚀 ¡Desarrollado con ❤️ para la comunidad de Proxmox!" 
+echo "🚀 ¡Desarrollado 🇵🇷 Puerto Rico con mucho ☕️ cafe para la comunidad de Proxmox!" 

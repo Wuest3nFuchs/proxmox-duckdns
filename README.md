@@ -309,3 +309,5 @@ Si este script te ayudó, ¡dale una estrella al repo! ⭐
 ---
 
 **Desarrollado con ❤️ para la comunidad de Proxmox**
+
+**Hecho en 🇵🇷 Puerto Rico con mucho ☕ café**
