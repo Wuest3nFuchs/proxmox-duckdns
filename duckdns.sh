@@ -1,52 +1,52 @@
 #!/usr/bin/env bash
 
 # DuckDNS Installer Standalone
-# Script para instalar y configurar DuckDNS en contenedores LXC de Proxmox
-# Mantiene tu IP dinámica actualizada automáticamente, ¡qué brutal!
+# Script to install and configure DuckDNS in Proxmox LXC containers
+# Keeps your dynamic IP updated automatically — awesome!
 
 echo "===== DuckDNS Installer ====="
 
-# Pedimos los datos necesarios al usuario - sin esto no podemos hacer na'
-read -r -p "Ingresa tu token de DuckDNS: " DUCKDNS_TOKEN
-read -r -p "Ingresa tu subdominio (ej. midominio): " DUCKDNS_DOMAIN
+# Ask user for required data
+read -r -p "Enter your DuckDNS token: " DUCKDNS_TOKEN
+read -r -p "Enter your subdomain (e.g. mydomain): " DUCKDNS_DOMAIN
 
-echo "[INFO] Instalando curl y cron..."
-# Actualizamos los paquetes primero - siempre hay que estar al día
+echo "[INFO] Installing curl and cron..."
+# Update packages first
 apt update
-# Instalamos curl para hacer las peticiones HTTP y cron para automatizar
+# Install curl for HTTP requests and cron for scheduling
 apt install -y curl cron
-echo "[OK] curl y cron instalados."
+echo "[OK] curl and cron installed."
 
-echo "[INFO] Configurando DuckDNS..."
-# Creamos el directorio donde va a vivir nuestro script
+echo "[INFO] Configuring DuckDNS..."
+# Create directory for the script
 mkdir -p /opt/duckdns
-# Generamos el script que va a actualizar la IP automáticamente
+# Generate the update script that runs automatically
 cat <<EOF >/opt/duckdns/duck.sh
 #!/bin/bash
-# Este script se ejecuta cada 5 minutos para mantener la IP actualizada
+# This script runs every 5 minutes to keep the IP updated
 echo url="https://www.duckdns.org/update?domains=${DUCKDNS_DOMAIN}&token=${DUCKDNS_TOKEN}&ip=" | curl -k -o ~/duckdns.log -K -
 EOF
 
-# Le damos permisos de ejecución solo al owner (seguridad ante todo)
+# Set execution permissions for the owner only
 chmod 700 /opt/duckdns/duck.sh
 
-# Configuramos cron para que ejecute el script cada 5 minutos
+# Configure cron to run the script every 5 minutes
 cat <<EOF >/etc/cron.d/duckdns
 */5 * * * * root /opt/duckdns/duck.sh >/dev/null 2>&1
 EOF
 
-# Permisos correctos para el archivo de cron
+# Correct permissions for the cron file
 chmod 644 /etc/cron.d/duckdns
-# Reiniciamos cron para que tome la nueva configuración
+# Restart cron to apply the new configuration
 systemctl restart cron
 
-echo "[OK] DuckDNS configurado y activo."
+echo "[OK] DuckDNS configured and active."
 
-echo "[INFO] Limpiando..."
-# Removemos paquetes que ya no se necesitan - mantenemos el sistema limpio
+echo "[INFO] Cleaning up..."
+# Remove packages that are no longer needed
 apt autoremove -y
-# Limpiamos el cache de apt para liberar espacio
+# Clean apt cache to free space
 apt autoclean -y
-echo "[OK] Limpieza completada."
+echo "[OK] Cleanup complete."
 
-echo "===== DuckDNS Instalado Correctamente ====="
+echo "===== DuckDNS Installed Successfully ====="
