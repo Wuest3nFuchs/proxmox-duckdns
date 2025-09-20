@@ -1,311 +1,308 @@
-# 🦆 DuckDNS para Proxmox LXC
+# 🦆 DuckDNS for Proxmox LXC
 
-Un script automatizado para configurar DuckDNS en contenedores LXC de Proxmox, perfecto para mantener tu IP dinámica actualizada sin complicaciones.
+An automated script to set up DuckDNS in Proxmox LXC containers — perfect for keeping your dynamic IP updated without hassle.
 
-## 📋 Requisitos
+## 📋 Requirements
 
-- **Proxmox VE** (cualquier versión reciente)
-- **Template LXC** (Ubuntu 22.04 o Debian 12 - se detecta automáticamente)
-- **Token de DuckDNS** (obtenido desde [duckdns.org](https://www.duckdns.org))
-- **Subdominio registrado** en DuckDNS
+- **Proxmox VE** (any recent version)  
+- **LXC template** (Ubuntu 22.04 or Debian 12 — detected automatically)  
+- **DuckDNS token** (from https://www.duckdns.org)  
+- **Registered subdomain** on DuckDNS
 
-## 🚀 Instalación Rápida
+## 🚀 Quick Installation
 
-### Método 1: Instalación Automática Completa (¡RECOMENDADO!) 🎯
+### Method 1: Full Automatic Install (RECOMMENDED!) 🎯
 
-**Opción A: Súper Rápida (Dos pasos)** ⚡
+**Option A: Super Fast (Two steps)** ⚡
 
 ```bash
-# Paso 1: Descargar el instalador
+# Step 1: Download the installer
 curl -sSL https://raw.githubusercontent.com/MondoBoricua/proxmox-duckdns/main/auto-install.sh | bash
 
-# Paso 2: Ejecutar el instalador (copia y pega el comando que aparece)
+# Step 2: Run the installer (copy and paste the command that appears)
 bash /tmp/proxmox-auto-install.sh
 ```
 
-> **💡 Nota**: El primer comando descarga el instalador, el segundo lo ejecuta. Así evitamos problemas con pipes.
+> **💡 Note:** The first command downloads the installer, the second runs it. This avoids pipe-related issues.
 
-**Opción B: Descarga y Ejecuta** 📥
+**Option B: Download and Run** 📥
 
 ```bash
-# Desde el host Proxmox (SSH o consola)
+# From the Proxmox host (SSH or console)
 wget https://raw.githubusercontent.com/MondoBoricua/proxmox-duckdns/main/proxmox-auto-install.sh
 chmod +x proxmox-auto-install.sh
 ./proxmox-auto-install.sh
 ```
 
-**¿Qué hace este script?**
-- ✅ Crea el contenedor LXC automáticamente
-- ✅ Detecta y usa el mejor template disponible (Ubuntu 22.04 o Debian 12)
-- ✅ Configura la red y almacenamiento
-- ✅ Instala y configura DuckDNS
-- ✅ Configura cron para actualización automática
-- ✅ Habilita autoboot (se inicia automáticamente con Proxmox)
-- ✅ Configura autologin en consola (sin contraseña)
-- ✅ Contraseña por defecto: `duckdns` (personalizable)
-- ✅ Crea pantalla de bienvenida con información en tiempo real
-- ✅ Prueba la primera actualización
-- ✅ ¡Todo listo en 5 minutos!
+What this script does:
+- ✅ Automatically creates the LXC container
+- ✅ Detects and uses the best available template (Ubuntu 22.04 or Debian 12)
+- ✅ Configures network and storage
+- ✅ Installs and configures DuckDNS
+- ✅ Sets up cron for automatic updates
+- ✅ Enables autoboot (container starts with Proxmox)
+- ✅ Configures console autologin (no password)
+- ✅ Default password: `duckdns` (customizable)
+- ✅ Creates a welcome screen with real-time info
+- ✅ Tests the first update
+- ✅ Ready in ~5 minutes!
 
-### Método 2: Instalación Manual en Contenedor Existente
+### Method 2: Manual Install in Existing Container
 
-#### 1. Crear el Contenedor LXC
+#### 1. Create the LXC Container
 
-En Proxmox, crea un nuevo contenedor LXC:
-- **Template**: Ubuntu 22.04 o Debian 11/12
-- **RAM**: 512MB (suficiente)
-- **Disco**: 2GB (mínimo)
-- **Red**: Configurada con acceso a internet
+In Proxmox, create a new LXC container:
+- **Template:** Ubuntu 22.04 or Debian 11/12  
+- **RAM:** 512MB (sufficient)  
+- **Disk:** 2GB (minimum)  
+- **Network:** configured with internet access
 
-#### 2. Acceder al Contenedor
+#### 2. Enter the Container
 
 ```bash
-# Desde Proxmox, accede al contenedor
-pct enter [ID_DEL_CONTENEDOR]
+# From Proxmox, enter the container
+pct enter [CONTAINER_ID]
 ```
 
-#### 3. Instalación (Método Rápido) 🚀
+#### 3. Install (Quick Method) 🚀
 
 ```bash
-# Instalación en una sola línea
+# One-line install
 curl -sSL https://raw.githubusercontent.com/MondoBoricua/proxmox-duckdns/main/install.sh | sudo bash
 ```
 
-#### 3. Instalación (Método Manual)
+#### 3. Install (Manual Method)
 
 ```bash
-# Descargar el script
+# Download the script
 wget https://raw.githubusercontent.com/MondoBoricua/proxmox-duckdns/main/duckdns.sh
 
-# Darle permisos de ejecución
+# Make executable
 chmod +x duckdns.sh
 
-# Ejecutar como root
+# Run as root
 sudo ./duckdns.sh
 ```
 
-### 4. Configurar Durante la Instalación
+### 4. Configure During Install
 
-El script te pedirá:
-- **Token de DuckDNS**: Tu token personal de la página de DuckDNS
-- **Subdominio**: Solo el nombre (ej: `midominio`, no `midominio.duckdns.org`)
+The script will ask for:
+- **DuckDNS token:** your personal token from DuckDNS
+- **Subdomain:** just the name (e.g., `mydomain`, not `mydomain.duckdns.org`)
 
-## 🔧 Lo que Hace el Script
+## 🔧 What the Script Does
 
-El instalador automáticamente:
+The installer automatically:
 
-1. **Instala dependencias** necesarias (`curl` y `cron`)
-2. **Crea el directorio** `/opt/duckdns/`
-3. **Genera el script** de actualización personalizado
-4. **Configura cron** para ejecutar cada 5 minutos
-5. **Inicia el servicio** cron automáticamente
-6. **Limpia el sistema** removiendo paquetes innecesarios
+1. Installs required dependencies (`curl` and `cron`)  
+2. Creates `/opt/duckdns/` directory  
+3. Generates a customized update script  
+4. Sets up cron to run every 5 minutes  
+5. Starts cron service automatically  
+6. Cleans unnecessary packages
 
-## 📁 Archivos Creados
+## 📁 Files Created
 
-Después de la instalación encontrarás:
+After installation you'll find:
 
-```
-/opt/duckdns/duck.sh          # Script de actualización
-/opt/duckdns/welcome.sh       # Pantalla de bienvenida
-/etc/cron.d/duckdns           # Configuración de cron
-~/duckdns.log                 # Log de actualizaciones
-/var/log/duckdns/detailed.log # Historial detallado
-```
+/opt/duckdns/duck.sh          # Update script  
+/opt/duckdns/welcome.sh       # Welcome screen  
+/etc/cron.d/duckdns           # Cron configuration  
+~/duckdns.log                 # Update log  
+/var/log/duckdns/detailed.log # Detailed history
 
-## 🔓 Acceso al Contenedor
+## 🔓 Accessing the Container
 
-### **Consola Proxmox (Recomendado)**
+### Proxmox Console (Recommended)
 ```bash
-# Acceso directo sin contraseña (autologin habilitado)
-pct enter [ID_CONTENEDOR]
+# Direct access without password (autologin enabled)
+pct enter [CONTAINER_ID]
 ```
 
-### **SSH (Opcional)**
+### SSH (Optional)
 ```bash
-# Acceso por SSH (requiere contraseña)
-ssh root@IP_DEL_CONTENEDOR
-# Contraseña por defecto: duckdns
+# SSH access (requires password)
+ssh root@CONTAINER_IP
+# Default password: duckdns
 ```
 
-### **Autoboot**
-El contenedor se inicia automáticamente cuando Proxmox arranca.
+### Autoboot
+The container starts automatically when Proxmox boots.
 
-## 🖥️ Pantalla de Bienvenida
+## 🖥️ Welcome Screen
 
-Cuando entres al contenedor (`pct enter [ID]`), verás automáticamente:
+When you enter the container (`pct enter [ID]`) you'll see:
 
-- 🌐 **Dominio configurado**
-- 📡 **IP actual del servidor**
-- 🕐 **Última actualización y resultado**
-- 📈 **Historial de las últimas 3 actualizaciones**
-- 🔄 **Estado del servicio cron**
-- 🔍 **Verificación de DNS en tiempo real**
-- 📋 **Comandos útiles disponibles**
+- 🌐 Configured domain  
+- 📡 Current server IP  
+- 🕐 Last update and result  
+- 📈 History of last 3 updates  
+- 🔄 Cron service status  
+- 🔍 Real-time DNS verification  
+- 📋 Useful commands available
 
-**Comando rápido**: Escribe `duckdns` en cualquier momento para ver la información.
+Quick command: run `duckdns` anytime to view info.
 
-## 🔍 Verificar que Funciona
+## 🔍 Verify It Works
 
-### Comprobar el Cron
+Check cron:
 ```bash
-# Ver si el cron está activo
+# See if cron is active
 systemctl status cron
 
-# Verificar la configuración
+# Verify cron config
 cat /etc/cron.d/duckdns
 ```
 
-### Ejecutar Manualmente
+Run manually:
 ```bash
-# Probar el script manualmente
+# Test the update script
 /opt/duckdns/duck.sh
 
-# Ver el resultado
+# View result
 cat ~/duckdns.log
 
-# Ver historial completo
+# View detailed history
 tail -f /var/log/duckdns/detailed.log
 
-# Mostrar información completa
+# Show full info
 duckdns
 ```
 
-### Verificar DNS
+Verify DNS:
 ```bash
-# Comprobar que tu dominio resuelve correctamente
-nslookup tudominio.duckdns.org
+# Check that your domain resolves
+nslookup yourdomain.duckdns.org
 ```
 
-## 🛠️ Solución de Problemas
+## 🛠️ Troubleshooting
 
-### Problemas con el Instalador Automático
+### Auto installer errors
 
-#### Error: "Este script debe ejecutarse en un servidor Proxmox VE"
+Error: "This script must be run on a Proxmox VE host"
 ```bash
-# Asegúrate de estar en el HOST Proxmox, no en un contenedor
-# Usa SSH para conectarte al servidor Proxmox directamente
-ssh root@IP_DE_TU_PROXMOX
+# Ensure you're on the PROXMOX HOST, not inside a container
+# SSH into your Proxmox server directly
+ssh root@YOUR_PROXMOX_IP
 ```
 
-#### El instalador automático no funciona
+Auto-installer not working:
 ```bash
-# Solución 1: Usar el método de dos pasos
+# Fix 1: Use the two-step method
 curl -sSL https://raw.githubusercontent.com/MondoBoricua/proxmox-duckdns/main/auto-install.sh | bash
 bash /tmp/proxmox-auto-install.sh
 
-# Solución 2: Descargar y ejecutar paso a paso
+# Fix 2: Download and run step-by-step
 wget https://raw.githubusercontent.com/MondoBoricua/proxmox-duckdns/main/proxmox-auto-install.sh
 chmod +x proxmox-auto-install.sh
 ./proxmox-auto-install.sh
 ```
 
-#### El autologin no funciona
+Autologin not working:
 ```bash
-# Arreglar autologin en contenedor existente
+# Fix autologin in an existing container
 wget https://raw.githubusercontent.com/MondoBoricua/proxmox-duckdns/main/fix-autologin.sh
 chmod +x fix-autologin.sh
-./fix-autologin.sh [ID_CONTENEDOR]
+./fix-autologin.sh [CONTAINER_ID]
 
-# O manualmente:
-pct reboot [ID_CONTENEDOR]
+# Or manually:
+pct reboot [CONTAINER_ID]
 ```
 
-#### El contenedor no se crea
+Container not created:
 ```bash
-# Verifica que el ID no esté en uso
+# Check ID not in use
 pct list
 
-# Verifica que el storage existe
+# Check storage exists
 pvesm status
 
-# Verifica templates disponibles
+# Check available templates
 pct template list
 ```
 
-#### Error de permisos o red
+Permission or network errors:
 ```bash
-# Verifica la configuración de red
+# Check network config
 ip addr show
 
-# Verifica el bridge de red
+# Check network bridge
 brctl show
 ```
 
-### Problemas Generales
+General issues
 
-#### El cron no se ejecuta
+Cron not running:
 ```bash
-# Reiniciar el servicio cron
+# Restart cron
 systemctl restart cron
 
-# Verificar logs del sistema
+# Check cron logs
 journalctl -u cron
 ```
 
-#### El script no actualiza la IP
+Script not updating IP:
 ```bash
-# Verificar conectividad
+# Check connectivity
 curl -I https://www.duckdns.org
 
-# Comprobar el token y dominio en el script
+# Check token and domain in script
 cat /opt/duckdns/duck.sh
 ```
 
-### Cambiar la frecuencia de actualización
+Change update frequency:
 ```bash
-# Editar el archivo de cron (por defecto cada 5 minutos)
+# Edit cron file (default every 5 minutes)
 nano /etc/cron.d/duckdns
 
-# Ejemplos de frecuencias:
-# */1 * * * *     # Cada minuto
-# */10 * * * *    # Cada 10 minutos  
-# 0 */1 * * *     # Cada hora
+# Examples:
+# */1 * * * *     # Every minute
+# */10 * * * *    # Every 10 minutes
+# 0 */1 * * *     # Every hour
 ```
 
-## 🔄 Desinstalar
+## 🔄 Uninstall
 
-Si necesitas remover DuckDNS:
-
+If you need to remove DuckDNS:
 ```bash
-# Detener y remover cron
+# Remove cron
 rm /etc/cron.d/duckdns
 systemctl restart cron
 
-# Eliminar archivos
+# Remove files
 rm -rf /opt/duckdns/
 rm ~/duckdns.log
 ```
 
-## 📝 Notas Importantes
+## 📝 Important Notes
 
-- **Compatibilidad**: Funciona con Ubuntu 22.04 y Debian 12 (detección automática)
-- **Templates**: El script busca automáticamente el mejor template disponible
-- **Autologin**: La consola de Proxmox no requiere contraseña (configurado automáticamente)
-- **Contraseña SSH**: Por defecto es `duckdns` (puedes cambiarla durante la instalación)
-- **Autoboot**: El contenedor se inicia automáticamente con Proxmox
-- **Seguridad**: El script se ejecuta como root, asegúrate de confiar en el código
-- **Logs**: Los logs se guardan en `~/duckdns.log` para debugging
-- **Firewall**: No necesitas abrir puertos adicionales
-- **Backup**: Considera respaldar tu configuración antes de cambios mayores
+- **Compatibility:** Works with Ubuntu 22.04 and Debian 12 (auto-detected)  
+- **Templates:** The script automatically picks the best template available  
+- **Autologin:** Proxmox console requires no password (auto-configured)  
+- **SSH password:** Default is `duckdns` (changeable during install)  
+- **Autoboot:** Container starts with Proxmox boot  
+- **Security:** Script runs as root — only run if you trust the code  
+- **Logs:** Logs stored in `~/duckdns.log` for debugging  
+- **Firewall:** No extra ports required  
+- **Backup:** Consider backing up config before major changes
 
-## 🤝 Contribuir
+## 🤝 Contribute
 
-¿Encontraste un bug o tienes una mejora? 
-1. Haz fork del repositorio
-2. Crea tu rama de feature (`git checkout -b feature/mejora-increible`)
-3. Commit tus cambios (`git commit -am 'Añade mejora increíble'`)
-4. Push a la rama (`git push origin feature/mejora-increible`)
-5. Crea un Pull Request
+Found a bug or have an improvement?
+1. Fork the repo  
+2. Create a feature branch (`git checkout -b feature/amazing-improvement`)  
+3. Commit your changes (`git commit -am 'Add amazing improvement'`)  
+4. Push the branch (`git push origin feature/amazing-improvement`)  
+5. Open a Pull Request
 
-## 📜 Licencia
+## 📜 License
 
-Este proyecto está bajo la Licencia MIT - ve el archivo [LICENSE](LICENSE) para más detalles.
+This project is under the MIT License — see the LICENSE file for details.
 
-## ⭐ ¿Te Sirvió?
+## ⭐ Was this helpful?
 
-Si este script te ayudó, ¡dale una estrella al repo! ⭐
+If this script helped you, give the repo a star! ⭐
 
 ---
 
-**Desarrollado en 🇵🇷 Puerto Rico con mucho ☕ café ❤️ para la comunidad de Proxmox**
+Developed in Puerto Rico with lots of coffee for the Proxmox community ❤️
