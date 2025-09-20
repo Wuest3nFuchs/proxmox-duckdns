@@ -1,54 +1,54 @@
 #!/usr/bin/env bash
 
-# Instalador rápido automático para DuckDNS en Proxmox
-# Descarga y ejecuta el script completo de instalación automática
+# Quick automatic installer for DuckDNS on Proxmox
+# Downloads and runs the full automatic installation script
 
-echo "🦆 Instalador Automático DuckDNS para Proxmox"
-echo "============================================="
+echo "🦆 DuckDNS Automatic Installer for Proxmox"
+echo "========================================="
 echo ""
 
-# Verificar que estamos en Proxmox
+# Verify we're on Proxmox
 if ! command -v pct &> /dev/null; then
-    echo "❌ Este script debe ejecutarse en un servidor Proxmox VE"
-    echo "   Usa este comando desde el host Proxmox, no desde un contenedor"
+    echo "❌ This script must be run on a Proxmox VE host"
+    echo "   Run this command from the Proxmox host, not from a container"
     exit 1
 fi
 
-# Verificar que tenemos wget o curl
+# Verify we have wget or curl
 if ! command -v wget &> /dev/null && ! command -v curl &> /dev/null; then
-    echo "📦 Instalando wget..."
+    echo "📦 Installing wget..."
     apt update && apt install -y wget
 fi
 
-# URL del script principal
+# URL of the main script
 SCRIPT_URL="https://raw.githubusercontent.com/MondoBoricua/proxmox-duckdns/main/proxmox-auto-install.sh"
 
-echo "⬇️  Descargando instalador automático..."
+echo "⬇️  Downloading automatic installer..."
 
-# Descargar el script
+# Download the script
 if command -v wget &> /dev/null; then
     wget -O /tmp/proxmox-auto-install.sh "$SCRIPT_URL"
 else
     curl -o /tmp/proxmox-auto-install.sh "$SCRIPT_URL"
 fi
 
-# Verificar descarga
+# Verify download
 if [[ ! -f /tmp/proxmox-auto-install.sh ]]; then
-    echo "❌ Error al descargar el script"
+    echo "❌ Error downloading the script"
     exit 1
 fi
 
-# Dar permisos
+# Set permissions
 chmod +x /tmp/proxmox-auto-install.sh
 
-echo "✅ ¡Descarga completada!"
+echo "✅ Download complete!"
 echo ""
-echo "🛠️  **CONTINÚA CON LA INSTALACIÓN:**"
+echo "🛠️  **CONTINUE WITH INSTALLATION:**"
 echo ""
 echo "   bash /tmp/proxmox-auto-install.sh"
 echo ""
-echo "💡 Copia y pega el comando de arriba para continuar"
+echo "💡 Copy and paste the command above to continue"
 echo ""
 
-# Mantener el archivo para ejecución manual
-# El archivo queda en /tmp/proxmox-auto-install.sh para uso posterior 
+# Keep the file for manual execution
+# The file remains at /tmp/proxmox-auto-install.sh for later use
