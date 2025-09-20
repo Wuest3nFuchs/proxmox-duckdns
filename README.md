@@ -17,7 +17,7 @@ An automated script to set up DuckDNS in Proxmox LXC containers — perfect for 
 
 ```bash
 # Step 1: Download the installer
-curl -sSL https://raw.githubusercontent.com/MondoBoricua/proxmox-duckdns/main/auto-install.sh | bash
+curl -sSL https://raw.githubusercontent.com/Wuest3nFuchs/proxmox-duckdns/main/auto-install.sh | bash
 
 # Step 2: Run the installer (copy and paste the command that appears)
 bash /tmp/proxmox-auto-install.sh
@@ -29,7 +29,7 @@ bash /tmp/proxmox-auto-install.sh
 
 ```bash
 # From the Proxmox host (SSH or console)
-wget https://raw.githubusercontent.com/MondoBoricua/proxmox-duckdns/main/proxmox-auto-install.sh
+wget https://raw.githubusercontent.com/Wuest3nFuchs/proxmox-duckdns/main/proxmox-auto-install.sh
 chmod +x proxmox-auto-install.sh
 ./proxmox-auto-install.sh
 ```
@@ -68,14 +68,14 @@ pct enter [CONTAINER_ID]
 
 ```bash
 # One-line install
-curl -sSL https://raw.githubusercontent.com/MondoBoricua/proxmox-duckdns/main/install.sh | sudo bash
+curl -sSL https://raw.githubusercontent.com/Wuest3nFuchs/proxmox-duckdns/main/install.sh | sudo bash
 ```
 
 #### 3. Install (Manual Method)
 
 ```bash
 # Download the script
-wget https://raw.githubusercontent.com/MondoBoricua/proxmox-duckdns/main/duckdns.sh
+wget https://raw.githubusercontent.com/Wuest3nFuchs/proxmox-duckdns/main/duckdns.sh
 
 # Make executable
 chmod +x duckdns.sh
@@ -189,11 +189,11 @@ ssh root@YOUR_PROXMOX_IP
 Auto-installer not working:
 ```bash
 # Fix 1: Use the two-step method
-curl -sSL https://raw.githubusercontent.com/MondoBoricua/proxmox-duckdns/main/auto-install.sh | bash
+curl -sSL https://raw.githubusercontent.com/Wuest3nFuchs/proxmox-duckdns/main/auto-install.sh | bash
 bash /tmp/proxmox-auto-install.sh
 
 # Fix 2: Download and run step-by-step
-wget https://raw.githubusercontent.com/MondoBoricua/proxmox-duckdns/main/proxmox-auto-install.sh
+wget https://raw.githubusercontent.com/Wuest3nFuchs/proxmox-duckdns/main/proxmox-auto-install.sh
 chmod +x proxmox-auto-install.sh
 ./proxmox-auto-install.sh
 ```
@@ -201,7 +201,7 @@ chmod +x proxmox-auto-install.sh
 Autologin not working:
 ```bash
 # Fix autologin in an existing container
-wget https://raw.githubusercontent.com/MondoBoricua/proxmox-duckdns/main/fix-autologin.sh
+wget https://raw.githubusercontent.com/Wuest3nFuchs/proxmox-duckdns/main/fix-autologin.sh
 chmod +x fix-autologin.sh
 ./fix-autologin.sh [CONTAINER_ID]
 
