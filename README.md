@@ -309,3 +309,5 @@ If this script helped you, give the repo a star! ⭐
 ---
 
 Developed in Puerto Rico with lots of coffee for the Proxmox community ❤️
+
+forked from here https://github.com/MondoBoricua/proxmox-duckdns
