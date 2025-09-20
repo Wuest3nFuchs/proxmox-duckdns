@@ -3,24 +3,24 @@
 duckdns.log
 detailed.log
 
-# Archivos temporales
+# Temporary files
 *.tmp
 *.temp
 
-# Archivos de configuración local
+# Local configuration files
 .env
 .env.local
 
-# Archivos de sistema
+# System files
 .DS_Store
 Thumbs.db
 
-# Archivos de editor
+# Editor files
 .vscode/
 .idea/
 *.swp
 *.swo
 
-# Archivos de backup
+# Backup files
 *.bak
-*.backup 
+*.backup
