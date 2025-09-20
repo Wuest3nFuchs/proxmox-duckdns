@@ -1,16 +1,16 @@
 #!/usr/bin/env bash
 
-# Script de instalación automática de DuckDNS en Proxmox
-# Se ejecuta desde el host Proxmox y crea todo automáticamente
-# ¡Brutal! - Todo automatizado para la comunidad boricua
+# Automatic DuckDNS installer for Proxmox
+# Runs from the Proxmox host and creates everything automatically
+# Awesome! — Fully automated for the Boricua community
 
-# Configuración básica sin manejo estricto de errores
+# Basic configuration without strict error handling
 
-echo "🦆 ===== INSTALADOR AUTOMÁTICO DUCKDNS PARA PROXMOX ====="
-echo "Este script va a crear un contenedor LXC y configurar DuckDNS automáticamente"
+echo "🦆 ===== DUCKDNS AUTOMATIC INSTALLER FOR PROXMOX ====="
+echo "This script will create an LXC container and configure DuckDNS automatically"
 echo ""
 
-# Función para mostrar mensajes con colores
+# Function to show messages
 show_info() {
     echo -e "\e[34m[INFO]\e[0m $1"
 }
@@ -23,110 +23,106 @@ show_error() {
     echo -e "\e[31m[ERROR]\e[0m $1"
 }
 
-
-
-# Verificar que estamos en Proxmox
+# Verify we're on Proxmox
 if ! command -v pct &> /dev/null; then
-    show_error "Este script debe ejecutarse en un servidor Proxmox VE"
+    show_error "This script must be run on a Proxmox VE server"
     exit 1
 fi
 
+# Ask user for information
+echo "📝 Initial configuration:"
 
-
-# Pedir información al usuario
-echo "📝 Configuración inicial:"
-
-echo -n "Token de DuckDNS: "
+echo -n "DuckDNS token: "
 read DUCKDNS_TOKEN
 
-echo -n "Subdominio (ej. midominio): "
+echo -n "Subdomain (e.g. mydomain): "
 read DUCKDNS_DOMAIN
 
-echo -n "ID del contenedor (ej. 100): "
+echo -n "Container ID (e.g. 100): "
 read CONTAINER_ID
 
-echo -n "Hostname del contenedor [duckdns]: "
+echo -n "Container hostname [duckdns]: "
 read CONTAINER_HOSTNAME
 CONTAINER_HOSTNAME=${CONTAINER_HOSTNAME:-duckdns}
 
-echo -n "Contraseña root del contenedor [duckdns]: "
+echo -n "Container root password [duckdns]: "
 read CONTAINER_PASSWORD
 CONTAINER_PASSWORD=${CONTAINER_PASSWORD:-duckdns}
 
-echo -n "Almacenamiento [local-lvm]: "
+echo -n "Storage [local-lvm]: "
 read STORAGE
 STORAGE=${STORAGE:-local-lvm}
 
-echo -n "Bridge de red [vmbr0]: "
+echo -n "Network bridge [vmbr0]: "
 read NETWORK_BRIDGE
 NETWORK_BRIDGE=${NETWORK_BRIDGE:-vmbr0}
 
-# Validar entradas críticas
+# Validate critical inputs
 if [ -z "$DUCKDNS_TOKEN" ]; then
-    show_error "El token de DuckDNS es obligatorio"
+    show_error "DuckDNS token is required"
     exit 1
 fi
 
 if [ -z "$DUCKDNS_DOMAIN" ]; then
-    show_error "El subdominio de DuckDNS es obligatorio"
+    show_error "DuckDNS subdomain is required"
     exit 1
 fi
 
 if [ -z "$CONTAINER_ID" ]; then
-    show_error "El ID del contenedor es obligatorio"
+    show_error "Container ID is required"
     exit 1
 fi
 
-# Configuración por defecto
+# Default configuration
 CONTAINER_MEMORY=${CONTAINER_MEMORY:-512}
 CONTAINER_DISK=${CONTAINER_DISK:-2}
 CONTAINER_CORES=${CONTAINER_CORES:-1}
 TEMPLATE_NAME="ubuntu-22.04-standard"
 
-show_info "Buscando templates disponibles..."
-# Mostrar templates disponibles para referencia
-echo "📋 Templates disponibles en el sistema:"
+show_info "Searching for available templates..."
+# Show available templates for reference
+echo "📋 Templates available on the system:"
 pct template list | head -10
 
-# Buscar templates disponibles en orden de preferencia
+# Find templates in order of preference
 TEMPLATE=""
 
-# Primero intentar Ubuntu 22.04
+# Try Ubuntu 22.04 first
 TEMPLATE=$(pct template list | grep -i ubuntu | grep -E "(22\.04|22-04)" | head -1 | awk '{print $2}')
 if [ -n "$TEMPLATE" ]; then
-    show_success "✅ Usando template de Ubuntu 22.04: $TEMPLATE"
+    show_success "✅ Using Ubuntu 22.04 template: $TEMPLATE"
 else
-    # Si no hay Ubuntu, buscar Debian 12
+    # If no Ubuntu, look for Debian 12
     TEMPLATE=$(pct template list | grep -i debian | grep -E "(12|12\.)" | head -1 | awk '{print $2}')
     if [ -n "$TEMPLATE" ]; then
-        show_success "✅ Usando template de Debian 12: $TEMPLATE"
-        show_info "💡 Nota: Se está usando Debian 12 porque Ubuntu 22.04 no está disponible"
+        show_success "✅ Using Debian 12 template: $TEMPLATE"
+        show_info "💡 Note: Debian 12 is used because Ubuntu 22.04 is not available"
     else
-        # Buscar cualquier template de Ubuntu o Debian reciente
+        # Find any recent Ubuntu or Debian template
         TEMPLATE=$(pct template list | grep -iE "(ubuntu|debian)" | head -1 | awk '{print $2}')
         if [ -n "$TEMPLATE" ]; then
-            show_success "✅ Usando template disponible: $TEMPLATE"
-            show_info "💡 Nota: Se está usando el template más reciente disponible"
+            show_success "✅ Using available template: $TEMPLATE"
+            show_info "💡 Note: Using the most recent template available"
         else
-            # Si no hay ninguno, descargar Ubuntu 22.04
-            show_info "⬇️ No se encontraron templates. Descargando Ubuntu 22.04..."
+            # If none found, download Ubuntu 22.04
+            show_info "⬇️ No templates found. Downloading Ubuntu 22.04..."
             pveam download local ubuntu-22.04-standard_22.04-1_amd64.tar.zst
             TEMPLATE="ubuntu-22.04-standard_22.04-1_amd64.tar.zst"
-            show_success "✅ Template descargado: $TEMPLATE"
+            show_success "✅ Template downloaded: $TEMPLATE"
         fi
     fi
 fi
 
-show_success "Template encontrado: $TEMPLATE"
+show_success "Template found: $TEMPLATE"
 
-# Verificar que el ID del contenedor no exista
+# Verify the container ID does not already exist
 if pct status $CONTAINER_ID &> /dev/null; then
-    show_error "El contenedor ID $CONTAINER_ID ya existe"
+    show_error "Container ID $CONTAINER_ID already exists"
     exit 1
 fi
 
-show_info "Creando contenedor LXC..."
-# Crear el contenedor LXC con autoboot habilitado
+show_info "Creating LXC container..."
+# Create the LXC container with autoboot enabled
 pct create $CONTAINER_ID local:vztmpl/$TEMPLATE \
     --hostname $CONTAINER_HOSTNAME \
     --memory $CONTAINER_MEMORY \
@@ -139,109 +135,109 @@ pct create $CONTAINER_ID local:vztmpl/$TEMPLATE \
     --unprivileged 1 \
     --features nesting=1
 
-show_success "Contenedor $CONTAINER_ID creado exitosamente"
+show_success "Container $CONTAINER_ID created successfully"
 
-# Esperar a que el contenedor esté listo
-show_info "Esperando a que el contenedor esté listo..."
+# Wait for the container to be ready
+show_info "Waiting for the container to be ready..."
 sleep 30
 
-# Función para ejecutar comandos en el contenedor
+# Function to run commands inside the container
 run_in_container() {
     pct exec $CONTAINER_ID -- bash -c "$1"
 }
 
-show_info "Actualizando sistema en el contenedor..."
-# Actualizar el sistema
+show_info "Updating system inside the container..."
+# Update the system
 run_in_container "apt update && apt upgrade -y"
 
-show_info "Instalando dependencias..."
-# Instalar dependencias
+show_info "Installing dependencies..."
+# Install dependencies
 run_in_container "apt install -y curl cron wget"
 
-show_info "Configurando DuckDNS..."
-# Crear directorio para DuckDNS
+show_info "Configuring DuckDNS..."
+# Create directory for DuckDNS
 run_in_container "mkdir -p /opt/duckdns"
 
-# Crear el script de actualización de DuckDNS mejorado
+# Create an improved DuckDNS update script
 run_in_container "cat > /opt/duckdns/duck.sh << 'EOF'
 #!/bin/bash
-# Script de actualización de DuckDNS - se ejecuta cada 5 minutos
-# Mantiene la IP actualizada automáticamente, ¡qué brutal!
+# DuckDNS update script — runs every 5 minutes
+# Keeps the IP updated automatically — awesome!
 
-# Obtener IP actual
+# Get current IP
 CURRENT_IP=\$(curl -s ifconfig.me 2>/dev/null)
 TIMESTAMP=\$(date '+%Y-%m-%d %H:%M:%S')
 
-# Crear directorio de logs si no existe
+# Create log directory if it doesn't exist
 mkdir -p /var/log/duckdns
 
-# Actualizar DuckDNS
+# Update DuckDNS
 RESULT=\$(echo url=\"https://www.duckdns.org/update?domains=$DUCKDNS_DOMAIN&token=$DUCKDNS_TOKEN&ip=\" | curl -k -s -K -)
 
-# Guardar resultado en log principal
+# Save result to main log
 echo \"\$RESULT\" > ~/duckdns.log
 
-# Guardar log detallado
-echo \"[\$TIMESTAMP] IP: \$CURRENT_IP - Resultado: \$RESULT\" >> /var/log/duckdns/detailed.log
+# Save detailed log
+echo \"[\$TIMESTAMP] IP: \$CURRENT_IP - Result: \$RESULT\" >> /var/log/duckdns/detailed.log
 
-# Mantener solo las últimas 100 líneas del log detallado
+# Keep only the last 100 lines of the detailed log
 tail -n 100 /var/log/duckdns/detailed.log > /var/log/duckdns/detailed.log.tmp
 mv /var/log/duckdns/detailed.log.tmp /var/log/duckdns/detailed.log
 EOF"
 
-# Dar permisos al script
+# Set permissions on the script
 run_in_container "chmod 700 /opt/duckdns/duck.sh"
 
-show_info "Configurando cron para actualización automática..."
-# Configurar cron para ejecutar cada 5 minutos
+show_info "Configuring cron for automatic updates..."
+# Configure cron to run every 5 minutes
 run_in_container "cat > /etc/cron.d/duckdns << 'EOF'
 */5 * * * * root /opt/duckdns/duck.sh >/dev/null 2>&1
 EOF"
 
-# Configurar permisos de cron
+# Set cron file permissions
 run_in_container "chmod 644 /etc/cron.d/duckdns"
 
-# Reiniciar cron
+# Restart cron
 run_in_container "systemctl restart cron"
 
-show_info "Probando primera actualización..."
-# Ejecutar una primera actualización
+show_info "Testing first update..."
+# Run a first update
 run_in_container "/opt/duckdns/duck.sh"
 
-# Verificar el resultado
+# Check the result
 RESULT=$(run_in_container "cat ~/duckdns.log 2>/dev/null || echo 'No log found'")
 if [[ "$RESULT" == *"OK"* ]]; then
-    show_success "Primera actualización exitosa: $RESULT"
+    show_success "First update successful: $RESULT"
 else
-    show_error "Posible error en la actualización: $RESULT"
+    show_error "Possible error in update: $RESULT"
 fi
 
-show_info "Limpiando sistema..."
-# Limpiar sistema
+show_info "Cleaning system..."
+# Clean the system
 run_in_container "apt autoremove -y && apt autoclean"
 
-# Crear script de información avanzado dentro del contenedor
+# Create an advanced info script inside the container
 run_in_container "cat > /root/duckdns-info.sh << 'EOF'
 #!/bin/bash
-echo \"🦆 ===== INFORMACIÓN DUCKDNS =====\"
-echo \"Dominio: $DUCKDNS_DOMAIN.duckdns.org\"
-echo \"Estado del servicio cron:\"
+echo \"🦆 ===== DUCKDNS INFORMATION =====\"
+echo \"Domain: $DUCKDNS_DOMAIN.duckdns.org\"
+echo \"Cron service status:\"
 systemctl status cron --no-pager -l
 echo \"\"
-echo \"Última actualización:\"
-cat ~/duckdns.log 2>/dev/null || echo \"No hay log disponible\"
+echo \"Last update:\"
+cat ~/duckdns.log 2>/dev/null || echo \"No log available\"
 echo \"\"
-echo \"Para ver logs en tiempo real: tail -f ~/duckdns.log\"
-echo \"Para actualizar manualmente: /opt/duckdns/duck.sh\"
+echo \"To view logs in real time: tail -f ~/duckdns.log\"
+echo \"To update manually: /opt/duckdns/duck.sh\"
 EOF"
 
 run_in_container "chmod +x /root/duckdns-info.sh"
 
-# Crear script de bienvenida que se ejecuta al hacer login
+# Create a welcome script that runs at login
 run_in_container "cat > /opt/duckdns/welcome.sh << 'EOF'
 #!/bin/bash
 
-# Colores para la salida
+# Colors for output
 GREEN='\033[0;32m'
 BLUE='\033[0;34m'
 YELLOW='\033[1;33m'
@@ -252,31 +248,31 @@ echo -e \"${BLUE}\"
 echo \"🦆 ===== DUCKDNS LXC CONTAINER =====\"
 echo -e \"${NC}\"
 
-# Información del dominio
-echo -e \"${GREEN}🌐 Dominio:${NC} $DUCKDNS_DOMAIN.duckdns.org\"
+# Domain info
+echo -e \"${GREEN}🌐 Domain:${NC} $DUCKDNS_DOMAIN.duckdns.org\"
 
-# Obtener IP actual del servidor
-CURRENT_IP=\$(curl -s ifconfig.me 2>/dev/null || echo \"No disponible\")
-echo -e \"${GREEN}📡 IP Actual del Servidor:${NC} \$CURRENT_IP\"
+# Get current server IP
+CURRENT_IP=\$(curl -s ifconfig.me 2>/dev/null || echo \"Unavailable\")
+echo -e \"${GREEN}📡 Current Server IP:${NC} \$CURRENT_IP\"
 
-# Verificar última actualización
+# Check last update
 if [ -f ~/duckdns.log ]; then
     LAST_UPDATE=\$(stat -c %y ~/duckdns.log 2>/dev/null | cut -d. -f1)
     LAST_RESULT=\$(cat ~/duckdns.log 2>/dev/null)
     
-    echo -e \"${GREEN}🕐 Última Actualización:${NC} \$LAST_UPDATE\"
+    echo -e \"${GREEN}🕐 Last Update:${NC} \$LAST_UPDATE\"
     
     if [[ \"\$LAST_RESULT\" == *\"OK\"* ]]; then
-        echo -e \"${GREEN}✅ Estado:${NC} Actualización exitosa\"
+        echo -e \"${GREEN}✅ Status:${NC} Update successful\"
     elif [[ \"\$LAST_RESULT\" == *\"KO\"* ]]; then
-        echo -e \"${RED}❌ Estado:${NC} Error en la actualización\"
+        echo -e \"${RED}❌ Status:${NC} Update error\"
     else
-        echo -e \"${YELLOW}⚠️  Estado:${NC} Resultado desconocido: \$LAST_RESULT\"
+        echo -e \"${YELLOW}⚠️  Status:${NC} Unknown result: \$LAST_RESULT\"
     fi
     
-    # Mostrar historial de las últimas 3 actualizaciones
+    # Show history of last 3 updates
     if [ -f /var/log/duckdns/detailed.log ]; then
-        echo -e \"${BLUE}📈 Últimas actualizaciones:${NC}\"
+        echo -e \"${BLUE}📈 Recent updates:${NC}\"
         tail -n 3 /var/log/duckdns/detailed.log | while read line; do
             if [[ \"\$line\" == *\"OK\"* ]]; then
                 echo -e \"  ${GREEN}✓${NC} \$line\"
@@ -288,54 +284,54 @@ if [ -f ~/duckdns.log ]; then
         done
     fi
 else
-    echo -e \"${YELLOW}⚠️  Estado:${NC} No hay actualizaciones registradas\"
+    echo -e \"${YELLOW}⚠️  Status:${NC} No updates recorded\"
 fi
 
-# Verificar si cron está funcionando
+# Check if cron is running
 if systemctl is-active --quiet cron; then
-    echo -e \"${GREEN}🔄 Servicio Cron:${NC} Activo (actualiza cada 5 minutos)\"
+    echo -e \"${GREEN}🔄 Cron Service:${NC} Active (updates every 5 minutes)\"
 else
-    echo -e \"${RED}❌ Servicio Cron:${NC} Inactivo\"
+    echo -e \"${RED}❌ Cron Service:${NC} Inactive\"
 fi
 
-# Verificar resolución DNS
+# Check DNS resolution
 DNS_IP=\$(nslookup $DUCKDNS_DOMAIN.duckdns.org 2>/dev/null | grep -A1 \"Name:\" | grep \"Address:\" | awk '{print \$2}' | head -1)
 if [ -n \"\$DNS_IP\" ]; then
-    echo -e \"${GREEN}🔍 DNS Resuelve a:${NC} \$DNS_IP\"
+    echo -e \"${GREEN}🔍 DNS Resolves To:${NC} \$DNS_IP\"
     if [ \"\$DNS_IP\" = \"\$CURRENT_IP\" ]; then
-        echo -e \"${GREEN}✅ DNS Sincronizado:${NC} IP coincide\"
+        echo -e \"${GREEN}✅ DNS Synced:${NC} IP matches\"
     else
-        echo -e \"${YELLOW}⚠️  DNS Desactualizado:${NC} IP no coincide\"
+        echo -e \"${YELLOW}⚠️  DNS Out of Date:${NC} IP does not match\"
     fi
 else
-    echo -e \"${RED}❌ DNS:${NC} No se pudo resolver el dominio\"
+    echo -e \"${RED}❌ DNS:${NC} Could not resolve domain\"
 fi
 
 echo \"\"
-echo -e \"${BLUE}📋 Comandos útiles:${NC}\"
-echo \"  • Ver logs en tiempo real: tail -f ~/duckdns.log\"
-echo \"  • Ver historial completo: tail -f /var/log/duckdns/detailed.log\"
-echo \"  • Actualizar ahora: /opt/duckdns/duck.sh\"
-echo \"  • Ver info completa: /root/duckdns-info.sh\"
-echo \"  • Estado cron: systemctl status cron\"
-echo \"  • Mostrar esta info: duckdns\"
+echo -e \"${BLUE}📋 Useful commands:${NC}\"
+echo \"  • View logs in real time: tail -f ~/duckdns.log\"
+echo \"  • View full history: tail -f /var/log/duckdns/detailed.log\"
+echo \"  • Update now: /opt/duckdns/duck.sh\"
+echo \"  • View full info: /root/duckdns-info.sh\"
+echo \"  • Cron status: systemctl status cron\"
+echo \"  • Show this info: duckdns\"
 echo \"\"
-echo -e \"${BLUE}🚀 Desarrollado con ❤️ para la comunidad de Proxmox${NC}\"
+echo -e \"${BLUE}🚀 Developed with ❤️ for the Proxmox community${NC}\"
 echo \"\"
 EOF"
 
 run_in_container "chmod +x /opt/duckdns/welcome.sh"
 
-# Agregar el script de bienvenida al .bashrc para que se ejecute al hacer login
+# Add the welcome script to .bashrc so it runs at login
 run_in_container "echo '' >> /root/.bashrc"
-run_in_container "echo '# Mostrar información de DuckDNS al hacer login' >> /root/.bashrc"
+run_in_container "echo '# Show DuckDNS info on login' >> /root/.bashrc"
 run_in_container "echo '/opt/duckdns/welcome.sh' >> /root/.bashrc"
 
-# También crear un alias para mostrar la info rápidamente
+# Also create an alias to show info quickly
 run_in_container "echo 'alias duckdns=\"/opt/duckdns/welcome.sh\"' >> /root/.bashrc"
 
-show_info "Configurando autologin para la consola..."
-# Configurar autologin en la consola del contenedor
+show_info "Configuring autologin for the console..."
+# Configure autologin for the container console
 run_in_container "mkdir -p /etc/systemd/system/console-getty.service.d"
 run_in_container "cat > /etc/systemd/system/console-getty.service.d/override.conf << 'EOF'
 [Service]
@@ -343,7 +339,7 @@ ExecStart=
 ExecStart=-/sbin/agetty --autologin root --noclear %I 38400 linux
 EOF"
 
-# También configurar autologin para tty1 (consola principal)
+# Also configure autologin for tty1 (main console)
 run_in_container "mkdir -p /etc/systemd/system/getty@tty1.service.d"
 run_in_container "cat > /etc/systemd/system/getty@tty1.service.d/override.conf << 'EOF'
 [Service]
@@ -351,7 +347,7 @@ ExecStart=
 ExecStart=-/sbin/agetty --autologin root --noclear %I 38400 linux
 EOF"
 
-# Configurar autologin para container-getty (específico para contenedores LXC)
+# Configure autologin for container-getty (LXC-specific)
 run_in_container "mkdir -p /etc/systemd/system/container-getty@1.service.d"
 run_in_container "cat > /etc/systemd/system/container-getty@1.service.d/override.conf << 'EOF'
 [Service]
@@ -359,49 +355,49 @@ ExecStart=
 ExecStart=-/sbin/agetty --autologin root --noclear --keep-baud pts/%I 115200,38400,9600 vt220
 EOF"
 
-# Habilitar los servicios de autologin
+# Enable autologin services
 run_in_container "systemctl daemon-reload"
 run_in_container "systemctl enable console-getty.service"
 run_in_container "systemctl enable container-getty@1.service"
 
-show_info "Reiniciando contenedor para aplicar autologin..."
-# Reiniciar el contenedor para que el autologin surta efecto
+show_info "Restarting container to apply autologin..."
+# Restart the container so autologin takes effect
 pct stop $CONTAINER_ID
 sleep 2
 pct start $CONTAINER_ID
 
-show_success "¡Instalación completada exitosamente!"
+show_success "Installation completed successfully!"
 echo ""
-echo "🎉 ===== RESUMEN DE LA INSTALACIÓN ====="
-echo "📦 Contenedor ID: $CONTAINER_ID"
+echo "🎉 ===== INSTALLATION SUMMARY ====="
+echo "📦 Container ID: $CONTAINER_ID"
 echo "🏷️  Hostname: $CONTAINER_HOSTNAME"
-echo "🌐 Dominio: $DUCKDNS_DOMAIN.duckdns.org"
-echo "🔑 Contraseña root: $CONTAINER_PASSWORD"
-echo "💾 Almacenamiento: $STORAGE"
-echo "🔧 Red: $NETWORK_BRIDGE"
-echo "🚀 Autoboot: Habilitado"
-echo "🔓 Autologin: Habilitado (consola automática)"
+echo "🌐 Domain: $DUCKDNS_DOMAIN.duckdns.org"
+echo "🔑 Root password: $CONTAINER_PASSWORD"
+echo "💾 Storage: $STORAGE"
+echo "🔧 Network: $NETWORK_BRIDGE"
+echo "🚀 Autoboot: Enabled"
+echo "🔓 Autologin: Enabled (automatic console)"
 echo ""
-echo "📋 COMANDOS ÚTILES:"
-echo "• Acceder al contenedor: pct enter $CONTAINER_ID"
-echo "• Ver información: pct exec $CONTAINER_ID -- /root/duckdns-info.sh"
-echo "• Parar contenedor: pct stop $CONTAINER_ID"
-echo "• Iniciar contenedor: pct start $CONTAINER_ID"
+echo "📋 USEFUL COMMANDS:"
+echo "• Enter the container: pct enter $CONTAINER_ID"
+echo "• View information: pct exec $CONTAINER_ID -- /root/duckdns-info.sh"
+echo "• Stop container: pct stop $CONTAINER_ID"
+echo "• Start container: pct start $CONTAINER_ID"
 echo ""
-echo "🔍 VERIFICACIÓN:"
-echo "• Verifica tu dominio: nslookup $DUCKDNS_DOMAIN.duckdns.org"
-echo "• IP actual: curl -s ifconfig.me"
+echo "🔍 VERIFICATION:"
+echo "• Verify your domain: nslookup $DUCKDNS_DOMAIN.duckdns.org"
+echo "• Current IP: curl -s ifconfig.me"
 echo ""
-echo "✅ CARACTERÍSTICAS HABILITADAS:"
-echo "• ✅ DuckDNS configurado y funcionando automáticamente"
-echo "• ✅ Actualización de IP cada 5 minutos"
-echo "• ✅ Autoboot al iniciar Proxmox"
-echo "• ✅ Autologin en consola (sin contraseña)"
-echo "• ✅ Pantalla de bienvenida con información en tiempo real"
+echo "✅ ENABLED FEATURES:"
+echo "• ✅ DuckDNS configured and running automatically"
+echo "• ✅ IP update every 5 minutes"
+echo "• ✅ Autoboot at Proxmox startup"
+echo "• ✅ Autologin on console (no password)"
+echo "• ✅ Welcome screen with real-time information"
 echo ""
-echo "💡 NOTA IMPORTANTE:"
-echo "• Consola Proxmox: pct enter $CONTAINER_ID (SIN CONTRASEÑA - autologin)"
-echo "• SSH: ssh root@IP_DEL_CONTENEDOR (contraseña: $CONTAINER_PASSWORD)"
-echo "• Si el autologin no funciona inmediatamente, usa: pct reboot $CONTAINER_ID"
+echo "💡 IMPORTANT NOTE:"
+echo "• Proxmox console: pct enter $CONTAINER_ID (NO PASSWORD - autologin)"
+echo "• SSH: ssh root@CONTAINER_IP (password: $CONTAINER_PASSWORD)"
+echo "• If autologin doesn't work immediately, use: pct reboot $CONTAINER_ID"
 echo ""
-echo "🚀 ¡Desarrollado 🇵🇷 Puerto Rico con mucho ☕️ cafe para la comunidad de Proxmox!" 
+echo "🚀 Developed 🇵🇷 Puerto Rico with lots of ☕️ coffee for the Proxmox community!"
