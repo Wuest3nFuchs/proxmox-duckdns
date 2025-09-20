@@ -1,4 +1,4 @@
-name: Test Scripts
+Name: Test Scripts
 
 on:
   push:
@@ -9,21 +9,21 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
-    
+
     steps:
     - uses: actions/checkout@v3
-    
+
     - name: Test Shell Scripts
       run: |
-        # Verificar sintaxis de bash
+        # Check bash syntax
         bash -n duckdns.sh
         bash -n install.sh
         echo "✅ Scripts syntax OK"
-        
+
     - name: Test with ShellCheck
       run: |
         sudo apt-get update
         sudo apt-get install -y shellcheck
         shellcheck duckdns.sh
         shellcheck install.sh
-        echo "✅ ShellCheck passed" 
+        echo "✅ ShellCheck passed"
