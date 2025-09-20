@@ -1,4 +1,5 @@
-# 🦆 DuckDNS for Proxmox LXC
+# 🦆ENGLISH VERSION 
+# 🦆DuckDNS for Proxmox LXC
 
 An automated script to set up DuckDNS in Proxmox LXC containers — perfect for keeping your dynamic IP updated without hassle.
 
