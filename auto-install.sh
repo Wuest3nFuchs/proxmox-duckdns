@@ -21,7 +21,7 @@ if ! command -v wget &> /dev/null && ! command -v curl &> /dev/null; then
 fi
 
 # URL of the main script
-SCRIPT_URL="https://raw.githubusercontent.com/MondoBoricua/proxmox-duckdns/main/proxmox-auto-install.sh"
+SCRIPT_URL="https://raw.githubusercontent.com/Wuest3nFuchs/proxmox-duckdns/main/proxmox-auto-install.sh"
 
 echo "⬇️  Downloading automatic installer..."
 
