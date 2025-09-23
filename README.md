@@ -21,7 +21,9 @@ An automated script to set up DuckDNS in Proxmox LXC containers — perfect for 
 ```bash
 # Step 1: Download the installer
 curl -sSL https://raw.githubusercontent.com/Wuest3nFuchs/proxmox-duckdns/main/auto-install.sh | bash
+```
 
+```bash
 # Step 2: Run the installer (copy and paste the command that appears)
 bash /tmp/proxmox-auto-install.sh
 ```
